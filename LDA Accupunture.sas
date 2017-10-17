@@ -15,11 +15,14 @@ proc freq data = LDA.ACU;
 tables time*group/crosslist;
 run;
 
+
+
 proc means data = LDA.ACU maxdec = 3;
 var severity age;
 class group;
 run;
 
+/*  NO DROPOUT- EQUAL NO OF MEASUREMENTS PER SUBJECT AND MEASUREMENTS TAKEN AT FIXED TIME POINTS =>BALANCED DATA */
 
 /* 1.1.a Individual Profiles Combined*/
 PROC SGPLOT data=LDA.ACU noautolegend;
