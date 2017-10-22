@@ -94,6 +94,16 @@ minor=none;
 title; 
 run;quit;
 
+/*Transformation: log(time+1)*/
+proc gplot data=LDA.ACU;
+plot Severity*log_time / haxis=axis1 vaxis=axis2;
+symbol c=red i=std1mjt w=1 mode=include;
+axis1 label=(h=2 "log(1+Time)") value=(h=1.5) order=(0 to 3) minor=none;
+axis2 label=(h=2 A=90 "Severity") value=(h=1.5) order=(10 to 35)
+minor=none;
+title; 
+run;quit;
+
 
 /*1.2.b. Graphic MEANS and std dev for each neuro */
 proc sort data=LDA.ACU;
