@@ -12,16 +12,23 @@ run;
 
 data lda.acu2;
 set lda.acu;
-timeclss=time;
+ltimeclss=log_time;
 run;
 
+/*Model 0: unstructured mean and covariance matrix*/
 proc mixed data=lda.acu2 method=ml;
-class timeclss group id;
-model severity= group*time/ noint s;
-repeated timeclss / type=un subject=ID r rcorr;
+class log_time group id;
+model severity=
+	chronicity*group*log_time frequency*group*log_time age*group*log_time / noint s;
+repeated log_time / type=un subject=id r rcorr;
 run;
 
-
+/*Model 1*/
+proc mixed data=lda.acu2 method=ml;
+class ltimeclss group id;
+model severity= group time age chronicity frequency group*time group*age group*chronicity group*frequency/ noint s;
+repeated ltimeclss / type=un subject=ID;
+run;
 
 
 
