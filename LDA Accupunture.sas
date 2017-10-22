@@ -282,6 +282,26 @@ minor=none;
 title; 
 run;quit;
 
+/*Residuals after removing for systematic trends*/
+proc glm data=LDA.ACU;
+model severity=time group age chronicity frequency group*age group*chronicity group*frequency;
+output out=LDA.out r=residual;
+run;
+
+data Out;
+set Out;
+residual=residual**2;
+run;
+
+proc gplot data=Out;
+plot residual*time / haxis=axis1 vaxis=axis2;
+symbol c=red i=std1mjt w=1 mode=include;
+axis1 label=(h=2 "Time (months)") value=(h=1.5) order=(0 to 12 by 1) minor=none;
+axis2 label=(h=2 A=90 "Squared residuals") value=(h=1.5) order=(50 to 200)
+minor=none;
+title; 
+run;quit;
+
 
 /*3. Correlation structure*/
 
