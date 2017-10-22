@@ -4,7 +4,7 @@
 
 data LDA.ACU;
 set LDA.aculda;
-log_time=log(time);
+log_time=log(1+time);
 run;
 
 
@@ -16,8 +16,9 @@ tables time*group/crosslist;
 run;
 
 proc means data = LDA.ACU maxdec = 3;
-var severity age;
+var severity age chronicity frequency;
 class group;
+where time=0;
 run;
 
 
@@ -32,6 +33,20 @@ PROC SGPLOT data=LDA.ACU noautolegend;
     keylegend 'Series' / title='id:' location=Outside;
 RUN;
 
+/*subset of 30 individuals*/
+proc surveyselect data=LDA.ACU method=srs n=30
+                  out=LDA.SampleSRS seed=1234;
+samplingunit id;
+run;
+
+PROC SGPLOT data=LDA.SampleSRS noautolegend;
+    title "Individual profiles";
+    series x=time y=severity / group=id lineattrs=(pattern=solid thickness=2) 
+        transparency=0.00 name='Series';
+    xaxis grid label='TIME (months)' values=(0 3 12);
+    yaxis grid label='Severity'; 
+    RUN;
+
 /* 1.1.b Individual Profiles per Treatment Group*/
 PROC SORT data=LDA.ACU; by group time; 
 RUN;
@@ -44,6 +59,19 @@ PROC SGPLOT data=LDA.ACU noautolegend;
     xaxis grid label='TIME (months)' values=(0 3 12);
     yaxis grid label='Headache Severity';
     keylegend 'Series' / title='id:' location=Outside;
+RUN;
+
+/*subset of 30 individuals*/
+PROC SORT data=LDA.SampleSRS; by group time; 
+RUN;
+
+PROC SGPLOT data=LDA.SampleSRS noautolegend;
+    title "Individual profiles";
+	by group;
+    series x=time y=severity / group=id lineattrs=(pattern=solid thickness=2) 
+        transparency=0.00 name='Series';
+    xaxis grid label='TIME (months)' values=(0 3 12);
+    yaxis grid label='Severity'; 
 RUN;
 
 
