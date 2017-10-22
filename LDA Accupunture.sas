@@ -84,10 +84,20 @@ title 'Mean of individual profiles';
     xaxis label='TIME (months)' values=(0 3 12);
     yaxis label="Headache Severity" min=10 max=35;
 RUN;
+/*without modifying x axis*/
+proc gplot data=LDA.ACU;
+plot Severity*time / haxis=axis1 vaxis=axis2;
+symbol c=red i=std1mjt w=1 mode=include;
+axis1 label=(h=2 "Time (months)") value=(h=1.5) order=(0 to 12 by 1) minor=none;
+axis2 label=(h=2 A=90 "Severity") value=(h=1.5) order=(10 to 35)
+minor=none;
+title; 
+run;quit;
 
 
 /*1.2.b. Graphic MEANS and std dev for each neuro */
-
+proc sort data=LDA.ACU;
+by group time;run;
 PROC SGPLOT data=LDA.ACU;
 title 'Mean of individual profiles';
 by group;
@@ -223,8 +233,52 @@ proc sgplot data=LDA.TEST noautolegend;
 run;
 
 
-/* Part one completed*/
 
 
+/*2. Variance structure*/
+
+/*check the mean severity at every time point*/
+proc means data = LDA.ACU maxdec = 3;
+var severity;
+class time;
+run;
+
+/*compute the squared residuals*/
+data LDA.Residuals;
+set LDA.ACU ;
+if time eq 0 then res=(severity-26.510)**2;
+if time eq 3 then res=(severity-21.598)**2;
+if time eq 12 then res=(severity-19.082)**2;
+run;
+
+/*plot squared residuals vs time*/
+goptions reset=ALL;
+proc gplot data=LDA.Residuals;
+plot res*time / haxis=axis1 vaxis=axis2;
+by group;
+symbol c=red i=std1mjt w=1 mode=include;
+axis1 label=(h=2 "Time (months)") value=(h=1.5) order=(0 to 12 by 1) minor=none;
+axis2 label=(h=2 A=90 "Squared residuals") value=(h=1.5) order=(150 to 300)
+minor=none;
+title; 
+run;quit;
+
+
+/*3. Correlation structure*/
+
+proc sort data=LDA.ACU;
+by id time;run;
+proc transpose data=LDA.ACU out=LDA.wide prefix=time;
+    by id ;
+    id time;
+    var severity;
+run;
+
+ods graphics on;
+title 'Correlation structure';
+proc corr data=LDA.wide plots (MAXPOINTS=NONE)=matrix (histogram);
+var time0 time3 time12;
+run;
+ods graphics off;
 
 
