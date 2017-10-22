@@ -21,6 +21,15 @@ class group;
 where time=0;
 run;
 
+/*covariate scatterplot at baseline*/
+ods graphics on;
+title 'Correlation of covariates';
+proc corr data=LDA.ACU plots (MAXPOINTS=NONE)=matrix (histogram);
+var severity age chronicity frequency;
+where time=0;
+run;
+ods graphics off;
+
 
 /*explore the mean structure */
 /* 1.1.a Individual Profiles Combined*/
