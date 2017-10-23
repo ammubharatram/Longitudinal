@@ -17,14 +17,16 @@ run;
 
 /*Model 0: unstructured mean and covariance matrix*/
 proc mixed data=lda.acu2 method=ml;
+ods output fitstatistics=fits0;
 class log_time group id;
-model severity=
+model severity= group*log_time chronicity*log_time frequency*log_time age*log_time
 	chronicity*group*log_time frequency*group*log_time age*group*log_time / noint s;
 repeated log_time / type=un subject=id r rcorr;
 run;
 
 /*Model 1*/
 proc mixed data=lda.acu2 method=ml;
+ods output fitstatistics=fits1;
 class ltimeclss group id;
 model severity= group time age chronicity frequency group*time group*age group*chronicity group*frequency/ noint s;
 repeated ltimeclss / type=un subject=ID;
