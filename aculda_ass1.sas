@@ -80,7 +80,7 @@ run;
 
 
 /* lets see if topelitz variance structure does better*/
-
+/*fuck Daniel*/
 proc mixed data=lda.acu;
 class ID;
 model severity= time age chronicity group group*time /solution;
