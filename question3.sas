@@ -2,10 +2,16 @@
 
 libname LDA "C:\Users\Daniel\Desktop\lda";
 
+
 /*TAKE THE LOG OF TIME*/
 data LDA.ACU;
 set LDA.aculda;
 log_time=log(1+time);
+run;
+
+data lda.acu2;
+set lda.acu;
+ltimeclss=log_time;
 run;
 
 
@@ -13,7 +19,7 @@ run;
 /*We include group for the second part*/
 proc reg data=LDA.ACU outest=lda.coeffs noprint;
 by id group;
-model severity=time;
+model severity=log_time;
 run;
 
 
@@ -36,13 +42,17 @@ by id;run;
 /*For intercepts*/
 proc glm data=lda.stage2;
 class group;
-model intercept=group age frequency chronicity /noint solution;
+model intercept=group age frequency/noint solution;
 run;
 /*For slopes*/
 proc glm data=lda.stage2;
 class group;
-model time=group age frequency chronicity /noint solution;
+model log_time=group age frequency/noint solution;
 run;
 
+/*Plot histogram of intercepts and slopes of the subjects*/
 
-/*Mean structure of q2 to be included in stage 2*/
+ods graphics off;
+proc univariate data=lda.stage2 noprint;
+   histogram intercept log_time;
+run;
