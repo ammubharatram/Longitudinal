@@ -85,7 +85,6 @@ RUN;
 
 
 /* 1.2.a. Graphic MEANS and std dev */
-/*code from bharat have nicely distanced x axis*/
 PROC SGPLOT data=LDA.ACU;
 title 'Mean of individual profiles';
     vline time / response=severity lineattrs=(thickness=2) transparency=0.00 
@@ -251,7 +250,42 @@ proc sgplot data=LDA.TEST noautolegend;
     yaxis grid label="VARIANCE Severity" grid;
 run;
 
-
+/* 1.4.1 Correlation and Variance Structure log transformed time*/
+data LDA.ACU;  
+set LDA.ACU;timeclass=time; 
+run; 
+/* 1.4.1.a Without Covariates */ 
+data LDA.test4;input group x1 y1;
+cards;
+1 0  261.93 
+1 1.1 286.55 
+1 2.5 250.06
+run;
+/* 1.4.1.b With Covariates */ 
+data LDA.test5;input group x1 y2;
+cards;
+1 0  94.4596 
+1 1.1 177.74  
+1 2.5 171.44run;
+/* 1.4.1.c Merging for plotting */ 
+data LDA.test3 (keep= group x1 y1 y2);
+merge LDA.test4 LDA.test5;by x1;
+run;
+/*--Set output size--*/
+ods graphics / reset imagemap;
+/*--SGPLOT proc statement--*/
+proc sgplot data=LDA.TEST3 noautolegend;    
+	/*--TITLE and FOOTNOTE--*/    
+	title "Observed variance with/without covariates"; 
+		footnote j=l "1= without covariates | 2=with covariates";    
+	/*--Scatter plot settings--*/    
+	series x=x1 y=y1 / curvelabel='1' curvelabelpos=max         
+		curvelabelattrs=(size=7) transparency=0.0 name='Series1';    
+	series x=x1 y=y2 / curvelabel='2' curvelabelpos=max         
+		curvelabelattrs=(size=7) transparency=0.0 name='Series2';    
+	xaxis label="TIME (Log(time+1))" values=(0 1.1 2.5) grid;    
+	yaxis grid label="VARIANCE Severity" grid;
+run;
 
 
 /*2. Variance structure*/
