@@ -266,7 +266,9 @@ data LDA.test5;input group x1 y2;
 cards;
 1 0  94.4596 
 1 1.1 177.74  
-1 2.5 171.44run;
+1 2.5 171.44
+run;
+
 /* 1.4.1.c Merging for plotting */ 
 data LDA.test3 (keep= group x1 y1 y2);
 merge LDA.test4 LDA.test5;by x1;
