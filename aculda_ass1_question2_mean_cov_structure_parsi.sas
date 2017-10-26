@@ -235,5 +235,43 @@ run;
 
 
 
+/*model 3  equal intercepts */
+
+/*model 3C */
+proc mixed data=lda.acu2 method=ml;
+ods output fitstatistics=fits3;
+class ltimeclss group id;
+model severity= age frequency  group*log_time frequency*log_time age*log_time / s;
+repeated ltimeclss / type=CS subject=ID r rcorr;
+run;
+/* 7721.6 df 9
+/*model 3T */
+proc mixed data=lda.acu2 method=ml;
+ods output fitstatistics=fits3;
+class ltimeclss group id;
+model severity= age frequency group*log_time frequency*log_time age*log_time /  s;
+repeated ltimeclss / type=TOEP subject=ID r rcorr;
+run;
+/* 7721.6 df 10 */
+/* 1 increase in df for toep for same logL as CS , so chose CS*/
+/*model 3CSH */
+proc mixed data=lda.acu2 method=ml;
+ods output fitstatistics=fits3;
+class ltimeclss group id;
+model severity=age frequency group*log_time frequency*log_time age*log_time /  s;
+repeated ltimeclss / type=CSH subject=ID r rcorr;
+run;
+/* 7675.3 df 11 */
+/* 2 CSH seems most appropriate as per LR test */
+
+/*model 3TOEPH */
+proc mixed data=lda.acu2 method=ml;
+ods output fitstatistics=fits3;
+class ltimeclss group id;
+model severity= age frequency group*log_time frequency*log_time age*log_time / s;
+repeated ltimeclss / type=TOEPH subject=ID r rcorr;
+run;
+/* 7675.2 df 12 */
+
 
 
