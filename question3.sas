@@ -44,15 +44,29 @@ proc glm data=lda.stage2;
 class group;
 model intercept=group age frequency/noint solution;
 run;
+
+/*delete subjects with only one observation to work with the slopes*/
+data lda.stage2c;
+set lda.stage2;
+if log_time eq 0 then delete;
+run;
 /*For slopes*/
-proc glm data=lda.stage2;
+proc glm data=lda.stage2c;
 class group;
 model log_time=group age frequency/noint solution;
 run;
 
 /*Plot histogram of intercepts and slopes of the subjects*/
-
 ods graphics off;
 proc univariate data=lda.stage2 noprint;
    histogram intercept log_time;
+run;
+
+/*Plot histogram of individual R2*/
+proc reg data=LDA.ACU outest=lda.coeffs2 noprint;
+by id group;
+model severity=log_time  4/ selection= rsquare;
+run;
+proc univariate data=lda.coeffs2 noprint;
+histogram _RSQ_;
 run;
