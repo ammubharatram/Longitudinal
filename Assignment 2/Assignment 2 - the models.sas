@@ -58,6 +58,18 @@ random _residual_ / subject=id type=cs;
 run;
 
 
+/* Alternating logistic regression */
+
+proc genmod data=lda.acu2 descending;
+class id timeclass;
+model frequency = age chronicity group time group*time
+/ dist=poisson;
+repeated subject=id / withinsubject=timeclass
+logor=exch covb corrw modelse;
+run;
+
+
+
 /* GENERALIZED LINEAR MIXED MODELS */
 
 proc glimmix data=lda.acu2 method=gauss(q=50);
