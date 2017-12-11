@@ -6,6 +6,7 @@ set lda.aculda2;
 drop severity;
 ltime= log(time + 1);
 timeclass=time;
+censored=0;
 if frequency ne "0" then censored=1;
 run;
 
