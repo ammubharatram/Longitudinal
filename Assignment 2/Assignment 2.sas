@@ -6,6 +6,7 @@ set lda.aculda2;
 drop severity;
 ltime= log(time + 1);
 timeclass=time;
+if frequency ne "0" then censored=1;
 run;
 
 proc format ;
@@ -17,6 +18,12 @@ run;
 /*Target variable is Poisson, don't know if it makes sense to consider Gamma */
 
 /* Quick exploratory analysis */
+
+/* Attrition */
+proc freq data = LDA.ACU2;
+tables time*group;
+where censored=1;
+run;
 
 /* mean structure */
 PROC SGPLOT data=LDA.ACU2;
