@@ -1,0 +1,58 @@
+
+data lda.acu2;
+set lda.aculda2;
+drop severity;
+ltime= log(time + 1);
+timeclass=time;
+if frequency=0 then frequency=".";
+run;
+
+
+
+/* GENERALIZED LINEAR MIXED MODELS */
+
+/* saturated GLMM*/
+proc glimmix data=lda.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept  / type=un subject=id;
+run;
+/* -2LL=6443.01 df=8   */
+
+/* include random slopes */
+proc glimmix data=lda.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6397.73 df=10 p<0.0001  df=10 p<0.0001 random slopes ok */
+
+/* reduce mean structure, remove age*time */
+proc glimmix data=lda.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age chronicity time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6399.17 df=9 p=0.2301 */
+
+/* ok, remove chronicity */
+proc glimmix data=lda.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6401.78 df=8 p=0.107 */
+
+/* ok, remove age */
+proc glimmix data=lda.acu2 method=quad(qpoints=30);
+class id;
+model frequency = time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6402.9 df=7 p=0.290 */
+
