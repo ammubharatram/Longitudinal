@@ -49,6 +49,46 @@ run;
 
 
 
+/* Reducing mean structure PART 2 */
+
+
+/* full model with random slopes */
+proc glimmix data=lda2.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type= un  subject=id;
+run;
+/* -2LL=6397.73 df=10 p<0.0001  df=10 p<0.0001 random slopes ok */
+
+/* reduce mean structure, remove  chronicity*time */
+proc glimmix data=lda2.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age chronicity time age*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6399.17 df=9 p=0.2301 */
+
+/* ok, age * time is significant hence cant remove age as well. But remove chronicity*/
+proc glimmix data=lda2.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age time age*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6402.18 df=8 p=0.022 */
+
+/*Final Reduced mean structure for Quadrature loglinear Poisson Mixed Model */
+
+
+
+
+
+
+
+
+
 
 
 
