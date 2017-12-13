@@ -38,21 +38,11 @@ random intercept time  / type=un subject=id;
 run;
 /* -2LL=6399.17 df=9 p=0.2301 */
 
-/* ok, remove chronicity */
+/* ok, remove chronicity and his interaction */
 proc glimmix data=lda.acu2 method=quad(qpoints=30);
 class id;
-model frequency = age time chronicity*time group*time
+model frequency = age time group*time
 / dist=poisson solution;
 random intercept time  / type=un subject=id;
 run;
-/* -2LL=6401.78 df=8 p=0.107 */
-
-/* ok, remove age */
-proc glimmix data=lda.acu2 method=quad(qpoints=30);
-class id;
-model frequency = time chronicity*time group*time
-/ dist=poisson solution;
-random intercept time  / type=un subject=id;
-run;
-/* -2LL=6402.9 df=7 p=0.290 */
-
+/* -2LL=6406.73 df=7 p=0.022 */
