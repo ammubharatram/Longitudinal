@@ -1,0 +1,246 @@
+
+
+/* MARGINAL MODELS */
+
+/* Standard GEE */
+/*Model GEE-1 */
+/*Model GEE-1 ind*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
+
+/*Model GEE-1 exch*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
+
+/*Model GEE-1 UN*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
+/* chronicity and interaction chronicity*ltime is not significant */
+
+/*Model LBM-1 */
+/*Model LBM-1 ind*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+
+/*Model LBM-1 exch*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time  / dist=poisson solution; 
+random _residual_ / subject=id type=cs; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+
+/*Model LBM-1 UN*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+
+/*Model GEE-1a*/
+/*Model GEE-1a ind*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
+
+/*Model GEE-1a exch*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
+
+/*Model GEE-1a UN*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
+/* chronicity and interaction chronicity*ltime is not significant */
+
+/*Model GEE-2 */
+/*Model GEE-2 ind*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
+
+/*Model GEE-2 Exch*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
+
+/*Model GEE-2 UN*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
+
+/*Model LBM-2 */
+/*Model LBM-2 ind*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age time age*time group*time  / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+
+/*Model LBM-2 exch*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+
+/*Model LBM-2 UN*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+
+/*Model GEE-2a*/
+/*Model GEE-2a ind*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
+
+/*Model GEE-2a exch*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
+
+/*Model GEE-2a UN*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = age time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
+
+/*Dummy */
+/*Model GEE-3 */
+/*Model GEE-3 ind*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
+
+/*Model GEE-3 Exch*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
+
+/*Model GEE-3 UN*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
+
+/*Model LBM-3 */
+/*Model LBM-3 ind*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass; 
+model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+
+/*Model LBM-3 exch*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+
+/*Model LBM-3 UN*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time/ dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+
+/*Model GEE-4 */
+/*Model GEE-4 ind*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency =  time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
+
+/*Model GEE-4 Exch*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency =  time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
+
+/*Model GEE-4 UN*/
+proc genmod data=lda2.acu2 descending;
+class id timeclass;
+model frequency =  time group*time / dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
+
+/*Model LBM-4 */
+/*Model LBM-4 ind*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency =  time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency =  time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+
+/*Model LBM-4 exch*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency =  time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency =  time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+
+/*Model LBM-4 UN*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency =  time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency =  time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+
