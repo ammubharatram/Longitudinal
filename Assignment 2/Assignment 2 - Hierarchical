@@ -46,3 +46,68 @@ model frequency = age time group*time
 random intercept time  / type=un subject=id;
 run;
 /* -2LL=6406.73 df=7 p=0.022 */
+
+
+
+
+
+
+
+/* Comparing methods- MQL,PQL (both using ML and REML estimators),Laplace and Gaussian with model with full covariates */
+
+/* MQL REML */
+proc glimmix data=lda2.acu2 method=rmpl;
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+
+
+/* PQL REML */
+proc glimmix data=lda2.acu2 method=rspl;
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+
+
+/* MQL ML */
+proc glimmix data=lda2.acu2 method=mmpl;
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+
+
+/* PQL ML */
+proc glimmix data=lda2.acu2 method=mspl;
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+
+
+
+
+/* Laplace approximation to integrals */
+proc glimmix data=lda2.acu2 method=quad(qpoints=1);
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept  / type=un subject=id;
+run;
+
+
+/* Gauss Quad */
+proc glimmix data=lda2.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age chronicity time age*time chronicity*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+
+
