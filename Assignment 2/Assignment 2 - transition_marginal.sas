@@ -80,16 +80,24 @@ prev1a=prev1;
 if time>3 then prev1a=0;
 run;
 proc genmod data=lda.acu2c descending;
-model frequency = chronicity age time group*time prev1 prev1a / dist=poisson;
+model frequency = chronicity age time group*time chronicity*time age*time prev1 prev1a / dist=poisson;
 run;
 
 /* First order autoregressive */
-proc genmod data=lda.acu2blog descending;
-model frequency = chronicity age time group*time prev1 / dist=poisson;
+proc genmod data=lda.acu2b descending;
+model frequency = chronicity age time group*time chronicity*time age*time prev1 / dist=poisson;
+run;
+/* Reduction of mean structure */
+proc genmod data=lda.acu2b descending;
+model frequency = chronicity age time group*time age*time prev1 / dist=poisson;
 run;
 
 proc genmod data=lda.acu2b descending;
-model frequency = chronicity time group*time prev1 / dist=poisson;
+model frequency = chronicity time group*time chronicity*time prev1 / dist=poisson;
+run;
+
+proc genmod data=lda.acu2b descending;
+model frequency = chronicity time group*time prev1 / dist=negbin;
 run;
 
 /* Second order autoregressive */
