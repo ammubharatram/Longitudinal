@@ -141,3 +141,60 @@ random intercept time  / type=un subject=id;
 run;
 
 
+
+
+
+
+
+
+/* EMPIRICAL BAYES ESTIMATE */
+
+proc glimmix data=lda.acu2 method=quad(qpoints=30) ;
+class id;
+model frequency = age time age*time group*time
+/ dist=poisson solution;
+random intercept time   / type=un  solution subject=id ;
+ods listing exclude solutionr;
+ods output solutionr=lda.out;
+run;
+
+title "Distribution of random intercept";
+proc univariate data=lda.out;
+var estimate;
+where effect="Intercept";
+histogram /midpoints=-1 to 1 by 0.125 normal  ;
+run;
+
+proc univariate data=lda.out;
+title "Distribution of random slopes";
+var estimate;
+where effect="time";
+histogram / midpoints=-0.03 to 0.03 by 0.004 normal;
+run;
+
+data int;
+set lda.out;
+where effect="Intercept";
+rint=estimate;
+keep rint;
+
+data slopes;
+set lda.out;
+where effect="time";
+rslopes=estimate;
+keep rslopes;
+
+data scatter;
+merge int slopes;
+rint=rint;
+rslopes=rslopes;
+run;
+
+proc sgplot data=scatter;
+  scatter x=rint y=rslopes ;
+  xaxis label='Random intercept' min=-1 max=1;
+    yaxis label="Random slopes" min=-0.1 max=0.1;
+run;
+
+
+
