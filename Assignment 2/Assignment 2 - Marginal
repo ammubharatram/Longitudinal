@@ -1,5 +1,4 @@
 
-
 /* MARGINAL MODELS */
 
 /* Standard GEE */
@@ -7,21 +6,20 @@
 /*Model GEE-1 ind*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
-model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson ;
+model frequency = age chronicity time age*time chronicity*time group*time / type3 dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
 
 /*Model GEE-1 exch*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
-model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson ;
+model frequency = age chronicity time age*time chronicity*time group*time / type3 dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
 
 /*Model GEE-1 UN*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
-model frequency = age chronicity time age*time chronicity*time group*time / dist=poisson ;
+model frequency = age chronicity time age*time chronicity*time group*time /type3  dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
-/* chronicity and interaction chronicity*ltime is not significant */
 
 /*Model LBM-1 */
 /*Model LBM-1 ind*/
@@ -58,21 +56,51 @@ random _residual_ / subject=id type=un; run;
 /*Model GEE-1a ind*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
-model frequency = age chronicity time age*time group*time / dist=poisson ;
+model frequency = age chronicity time age*time group*time / type3 dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
 
 /*Model GEE-1a exch*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
-model frequency = age chronicity time age*time group*time / dist=poisson ;
+model frequency = age chronicity time age*time group*time / type3 dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
 
 /*Model GEE-1a UN*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
-model frequency = age chronicity time age*time group*time / dist=poisson ;
+model frequency = age chronicity time age*time group*time / type3 dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
-/* chronicity and interaction chronicity*ltime is not significant */
+
+/*Model LBM-1a */
+/*Model LBM-1a ind*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=simple; run;
+
+/*Model LBM-1a exch*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age chronicity time age*time group*time  / dist=poisson solution; 
+random _residual_ / subject=id type=cs; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=cs; run;
+
+/*Model LBM-1a UN*/
+proc glimmix data=lda2.acu2 method=RSPL ;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
+proc glimmix data=lda2.acu2 method=RSPL empirical;
+class id timeclass;
+model frequency = age chronicity time age*time group*time / dist=poisson solution;
+random _residual_ / subject=id type=un; run;
 
 /*Model GEE-2 */
 /*Model GEE-2 ind*/
@@ -143,78 +171,27 @@ class id timeclass;
 model frequency = age time group*time / dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
 
-/*Dummy */
-/*Model GEE-3 */
-/*Model GEE-3 ind*/
-proc genmod data=lda2.acu2 descending;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson ;
-repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
-
-/*Model GEE-3 Exch*/
-proc genmod data=lda2.acu2 descending;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson ;
-repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
-
-/*Model GEE-3 UN*/
-proc genmod data=lda2.acu2 descending;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson ;
-repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
-
-/*Model LBM-3 */
-/*Model LBM-3 ind*/
-proc glimmix data=lda2.acu2 method=RSPL ;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
-random _residual_ / subject=id type=simple; run;
-proc glimmix data=lda2.acu2 method=RSPL empirical;
-class id timeclass; 
-model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
-random _residual_ / subject=id type=simple; run;
-
-/*Model LBM-3 exch*/
-proc glimmix data=lda2.acu2 method=RSPL ;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
-random _residual_ / subject=id type=cs; run;
-proc glimmix data=lda2.acu2 method=RSPL empirical;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
-random _residual_ / subject=id type=cs; run;
-
-/*Model LBM-3 UN*/
-proc glimmix data=lda2.acu2 method=RSPL ;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time/ dist=poisson solution;
-random _residual_ / subject=id type=un; run;
-proc glimmix data=lda2.acu2 method=RSPL empirical;
-class id timeclass;
-model frequency = chronicity time chronicity*time group*time / dist=poisson solution;
-random _residual_ / subject=id type=un; run;
-
-/*Model GEE-4 */
-/*Model GEE-4 ind*/
+/*Model GEE-x */
+/*Model GEE-x ind*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
 model frequency =  time group*time / dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=ind covb corrw modelse; run;
 
-/*Model GEE-4 Exch*/
+/*Model GEE-x Exch*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
 model frequency =  time group*time / dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=exch covb corrw modelse; run;
 
-/*Model GEE-4 UN*/
+/*Model GEE-x UN*/
 proc genmod data=lda2.acu2 descending;
 class id timeclass;
 model frequency =  time group*time / dist=poisson ;
 repeated subject=id / withinsubject=timeclass type=UN covb corrw modelse; run;
 
-/*Model LBM-4 */
-/*Model LBM-4 ind*/
+/*Model LBM-x */
+/*Model LBM-x ind*/
 proc glimmix data=lda2.acu2 method=RSPL ;
 class id timeclass;
 model frequency =  time group*time / dist=poisson solution;
@@ -224,7 +201,7 @@ class id timeclass;
 model frequency =  time group*time / dist=poisson solution;
 random _residual_ / subject=id type=simple; run;
 
-/*Model LBM-4 exch*/
+/*Model LBM-x exch*/
 proc glimmix data=lda2.acu2 method=RSPL ;
 class id timeclass;
 model frequency =  time group*time / dist=poisson solution;
@@ -234,7 +211,7 @@ class id timeclass;
 model frequency =  time group*time / dist=poisson solution;
 random _residual_ / subject=id type=cs; run;
 
-/*Model LBM-4 UN*/
+/*Model LBM-x UN*/
 proc glimmix data=lda2.acu2 method=RSPL ;
 class id timeclass;
 model frequency =  time group*time / dist=poisson solution;
@@ -244,3 +221,38 @@ class id timeclass;
 model frequency =  time group*time / dist=poisson solution;
 random _residual_ / subject=id type=un; run;
 
+
+/* Marginal Model 2 Plot for people at age 45*/
+data placebo;
+	do x=0 to 12 by 0.01;
+		group=1;
+		a= 0.0003*45*x - 0.0238*x + 2.7929 + (-0.0013*45);
+		y= exp(a);
+		output;
+	end;
+data treat;
+	do x=0 to 12 by 0.01;
+		group=2;
+		a= 0.0003*45*x - 0.0238*x + 2.7929 + (-0.0013*45) - 0.0065*x;
+		y= exp(a);
+		output;
+	end;
+	/* combining the fitted and observed variances in one data set */
+data test;
+	set placebo treat;
+run;
+/* creating the plot*/
+goptions reset=all;
+proc gplot data=test;
+	plot y*x=group / legend=legend1 haxis=axis1 vaxis=axis2;
+	symbol1 c=vibg h=1 i=join w=1.7 l=1 mode=include;
+	symbol2 c=depk i=join w=1.7 l=1 mode=include;
+	title h=2 '  Frequency evolution for Mean Age per Group';
+	axis1 label=(h=2 'Time') value=(h=1.5) order=(0 to 12 by 1) offset=(2)cm 
+		minor=none w=5;
+	axis2 label=(h=2 angle=90 'Headache Frequency') value=(h=1.5) w=5 order=(9 to 19 by 
+		2) offset=(0.2)cm minor=none w=5;
+	legend1 down=2 frame label=(h=1.5 'Treatment:') value=(h=1.5 'Placebo' 
+		'Acupunture') order=(1 2) mode=protect position=(inside top left) offset=(0.5cm, 
+		-0.5cm);
+	run;
