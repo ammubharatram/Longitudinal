@@ -32,13 +32,13 @@ run;
 
 /*Overview of missigness table*/
 proc mi data=lda.acu3 seed=675938 simple nimpute=0;
-title ’standard EM’;
+title â€™standard EMâ€™;
 em itprint outem=growthem1;
 var diff3 diff12;
 run;
 /*Overview of missigness table per group*/
 proc mi data=lda.acu3 seed=675938 simple nimpute=0;
-title ’standard EM’;
+title â€™standard EMâ€™;
 em itprint outem=growthem1;
 var diff3 diff12;
 by group;
@@ -57,20 +57,20 @@ run;
 
 /*GEE*/
 proc genmod data=lda.acu4;
-title ’data as is - GEE’;
+title â€™data as is - GEEâ€™;
 class timeclass group id;
 model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
 repeated subject=id / withinsubject=timeclass type=un modelse;
 run;
 proc glimmix data=lda.acu4;
-title ’data as is - GEE - linearized version’;
+title â€™data as is - GEE - linearized versionâ€™;
 nloptions maxiter=50 technique=newrap;
 class timeclass group id;
 model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
 random _residual_ / subject=id type=un;
 run;
 proc glimmix data=lda.acu4 empirical;
-title ’data as is - GEE - linearized version - empirical’;
+title â€™data as is - GEE - linearized version - empiricalâ€™;
 nloptions maxiter=50 technique=newrap;
 class timeclass group id;
 model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
@@ -227,14 +227,14 @@ run;
 /* WGEE: models */
 
 proc genmod data=lda.acu5;
-title ’data as is - WGEE’;
+title â€™data as is - WGEEâ€™;
 scwgt wi;
 class timeclass group id;
 model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
 repeated subject=id / withinsubject=timeclass type=un modelse;
 run;
 proc glimmix data=lda.acu5;
-title ’data as is - WGEE - linearized version’;
+title â€™data as is - WGEE - linearized versionâ€™;
 nloptions maxiter=50 technique=newrap;
 weight wi;
 class timeclass group id;
@@ -242,7 +242,7 @@ model severity=age chronicity time group*time age*time chronicity*time /dist=nor
 random _residual_ / subject=id type=un;
 run;
 proc glimmix data=lda.acu4 empirical;
-title ’data as is - WGEE - linearized version - empirical’;
+title â€™data as is - WGEE - linearized version - empiricalâ€™;
 weight wi;
 nloptions maxiter=50 technique=newrap;
 class timeclass group id;
