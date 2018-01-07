@@ -3,18 +3,21 @@ libname LDA 'C:\Users\u0117439\Desktop\LDA';
 data lda.acu2;
 set lda.aculda2;
 drop frequency;
-timeclass=time;
+logtime=log(time+1);
+logtimeclass=logtime;
 run;
+
+
+/********************************************/
+/* Exploration of missing data mechanisms.*/
+/********************************************/
 
 /* Long to wide format*/
 proc transpose data=lda.acu2 out=lda.acu2b prefix=severity;
     by id age chronicity group;
-    id time;
+    id logtime;
     var severity ;
 run;
-
-
-/* Exploration of missing data mechanisms.*/
 
 proc sort data=lda.acu2b;
 by group;
@@ -35,49 +38,52 @@ by group;
 run;
 
 
-
-/* Using data as it is.*/
+/********************************************/
+/* Using data as it is: LMM and GEE*/
+/********************************************/
 
 /*LMM*/
 /*method=ml*/
-proc mixed data=lda.acu2 method=ml;
-class timeclass group id;
-model severity= age chronicity group*time age*time chronicity*time/ solution;
-random intercept time  /type=un subject=ID g gcorr v vcorr;
-repeated timeclass / type=un subject=ID r rcorr;
+proc mixed data=lda.acu2 method=ml nobound;
+class logtimeclass group id;
+model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
+random intercept logtime  /type=un subject=ID g gcorr v vcorr;
+repeated logtimeclass / type=un subject=ID r rcorr;
 run;
 /*method=reml*/
-proc mixed data=lda.acu2 method=reml;
-class timeclass group id;
-model severity= age chronicity group*time age*time chronicity*time/ solution;
-random intercept time  /type=un subject=ID g gcorr v vcorr;
-repeated timeclass / type=un subject=ID r rcorr;
+proc mixed data=lda.acu2 method=reml nobound;
+class logtimeclass group id;
+model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
+random intercept logtime  /type=un subject=ID g gcorr v vcorr;
+repeated logtimeclass / type=un subject=ID r rcorr;
 run;
 
-/*GEE*/
+/*GEE (not valid)*/
 proc genmod data=lda.acu2;
 title ’data as is - GEE’;
-class timeclass group id;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
-repeated subject=id / withinsubject=timeclass type=un modelse;
+class logtimeclass group id;
+model severity=age chronicity group*logtime age*logtime chronicity*logtime /dist=normal;
+repeated subject=id / withinsubject=logtimeclass type=un modelse;
 run;
 proc glimmix data=lda.acu2;
 title ’data as is - GEE - linearized version’;
 nloptions maxiter=50 technique=newrap;
-class timeclass group id;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
+class logtimeclass group id;
+model severity=age chronicity group*logtime age*logtime chronicity*logtime /dist=normal;
 random _residual_ / subject=id type=un;
 run;
 proc glimmix data=lda.acu2 empirical;
 title ’data as is - GEE - linearized version - empirical’;
 nloptions maxiter=50 technique=newrap;
-class timeclass group id;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
+class logtimeclass group id;
+model severity=age chronicity group*logtime age*logtime chronicity*logtime /dist=normal;
 random _residual_ / subject=id type=un;
 run;
 
 
-/*WGEE*/
+/*******************************************************/
+/*WGEE (not valid with intermittent missing data)*/
+/*******************************************************/
 
 /* WGEE: macro for creating variables "dropout" and "prev" */
 
@@ -134,26 +140,21 @@ run;
 %mend;
 
 
-%dropout(data=lda.acu2,id=id,time=time,response=severity,out=lda.acu4);
+%dropout(data=lda.acu2,id=id,time=logtime,response=severity,out=lda.acu3);
 
-proc genmod data=lda.acu4 descending;
-class group prev timeclass;
-model dropout = prev group age chronicity time / pred dist=b;
+proc genmod data=lda.acu3 descending;
+class group prev logtimeclass;
+model dropout = prev group age chronicity logtime / pred dist=b;
 ods output obstats=pred;
 ods listing exclude obstats;
-run;
-
-proc print data=pred;
 run;
 
 data pred;
 set pred;
 keep observation pred;
 run;
-data lda.acu4b;
-merge pred lda.acu4;
-run;
-proc print data=lda.acu4b;
+data lda.acu3b;
+merge pred lda.acu3;
 run;
 
 
@@ -219,53 +220,49 @@ wi=1/wi;
 run;
 %mend;
 
-%dropwgt(data=lda.acu4b,id=id,time=time,pred=pred,dropout=dropout,out=lda.acu5);
-proc print data=lda.acu5;
-var id time severity dropout prev pred wi;
-run;
+%dropwgt(data=lda.acu3b,id=id,time=time,pred=pred,dropout=dropout,out=lda.acu4);
+
 
 /* WGEE: models */
 
-proc genmod data=lda.acu5;
+proc genmod data=lda.acu4;
 title ’data as is - WGEE’;
 scwgt wi;
-class timeclass group id;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
-repeated subject=id / withinsubject=timeclass type=un modelse;
+class logtimeclass group id;
+model severity=age chronicity group*logtime age*logtime chronicity*logtime /dist=normal;
+repeated subject=id / withinsubject=logtimeclass type=un modelse;
 run;
-proc glimmix data=lda.acu5;
+proc glimmix data=lda.acu4;
 title ’data as is - WGEE - linearized version’;
 nloptions maxiter=50 technique=newrap;
 weight wi;
-class timeclass group id;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
+class logtimeclass group id;
+model severity=age chronicity group*logtime age*logtime chronicity*logtime /dist=normal;
 random _residual_ / subject=id type=un;
 run;
 proc glimmix data=lda.acu4 empirical;
 title ’data as is - WGEE - linearized version - empirical’;
 weight wi;
 nloptions maxiter=50 technique=newrap;
-class timeclass group id;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal;
+class logtimeclass group id;
+model severity=age chronicity group*logtime age*logtime chronicity*logtime /dist=normal;
 random _residual_ / subject=id type=un;
 run;
 
 
-
+/********************************************/
 /*Multiple imputation*/
+/********************************************/
 
 /*1. MI: imputation task (MCMC method)*/
-proc sort data=lda.acu2b;
-by group;
-run;
-
-proc mi data=lda.acu2b seed=486048 simple out=lda.acu6 nimpute=10 round=0.1;
+proc mi data=lda.acu2b seed=486048 simple out=lda.acu5 nimpute=10 round=0.1;
 var age chronicity severity0 severity3 severity12;
 by group;
 run;
 
-data lda.acu6b;
-set lda.acu6;
+/*wide to long*/
+data lda.acu5b;
+set lda.acu5;
 array x (3) severity0 severity3 severity12;
 do j=1 to 3;
 severity=x(j);
@@ -273,52 +270,51 @@ time=j;
 output;
 end;
 run;
-data lda.acu6b;
-set lda.acu6b;
+data lda.acu5b;
+set lda.acu5b;
 drop severity0 severity3 severity12 j;
-timeclass=time;
+if time eq 1 then logtime=log(1+0);
+if time eq 2 then logtime=log(1+3);
+if time eq 3 then logtime=log(1+12);
+drop time;
+logtimeclass=logtime;
+if group eq 0 then group0=1;
+	else group0=0;
+if group eq 1 then group1=1;
+	else group1=0;
 run;
 
-proc sort data=lda.acu6b;
-by _imputation_ id time;
+proc sort data=lda.acu5b;
+by _imputation_;
 run;
 
 /*2.1. MI: analysis task: GEE*/
-proc genmod data=lda.acu6b;
+proc genmod data=lda.acu5b;
 title ’GEE after multiple imputation’;
-class timeclass group id;
+class logtimeclass group id;
 by _imputation_;
-model severity=age chronicity time group*time age*time chronicity*time /dist=normal covb;
-repeated subject=id / withinsubject=timeclass type=un modelse;
-ods output GEEEmpPEst=gmparms parminfo=gmpinfo CovB=gmcovb;
+model severity=age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime /dist=normal covb;
+repeated subject=id / withinsubject=logtimeclass type=un modelse;
+ods output GEEEmpPEst=geeparms parminfo=geepinfo CovB=geecovb;
 run;
 
-/*MI: delete redundant parameters*/
-data gmpinfo;
-set gmpinfo;
-if parameter="Prm6" then delete;
+/*3.1. MI: inference task: GEE*/
+proc mianalyze parms=geeparms covb=geecovb parminfo=geepinfo wcov bcov tcov;
+modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime;
 run;
-data gmparms;
-set gmparms;
-if level1=1 then delete;
-run;
+
 
 /*2.2. MI: analysis task: LMM*/
-proc mixed data=lda.acu6b method=ml asycov covtest;
-class timeclass group id;
+proc mixed data=lda.acu5b method=ml asycov covtest nobound;
+class logtimeclass group id;
 by _imputation_;
-model severity= age chronicity time group*time age*time chronicity*time/ s covb;
-random intercept time  /type=un subject=ID g gcorr v vcorr solution;
-repeated timeclass / type=un subject=ID r rcorr;
+model severity= age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime/ s covb;
+random intercept logtime  /type=un subject=ID g gcorr v vcorr solution;
+repeated logtimeclass / type=un subject=ID r rcorr;
 ods output solutionf = lmsolution covb = lmcovb covparms = lmcovparms asycov = lmasycov;
 run;
 
-data lmsolution;
-set lmsolution;
-if group=1 then delete;
-data lmcovb;
-set lmcovb;
-if row=6 then delete;
+/*??*/
 data lmcovparms;
 set lmcovparms;
 if CovParm=’YEAR UN(1,1)’ then effect = ’YEARUN11’;
@@ -350,16 +346,11 @@ run;
 
 
 
-/*3.1. MI: inference task: GEE*/
-proc mianalyze parms=gmparms covb=gmcovb parminfo=gmpinfo wcov bcov tcov;
-modeleffects age chronicity time group*time age*time chronicity*time;
-run;
-
 /*3.2. MI: inference task: LMM*/
 /* Combining 10 Separate Analyses (mean structure) */
 proc mianalyze parms=lmsolution covb(effectvar=rowcol)=lmcovb;
 title2 ’COMBINING 5 MIXED MODEL ANALYSES (MEAN STRUCTURE)’;
-modeleffects age chronicity time group*time age*time chronicity*time;
+modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime;
 run;
 /* Combining 10 Separate Analyses (covariance structure) */
 proc mianalyze parms=covparms0 covb(effectvar=rowcol)=asycov0;
@@ -367,6 +358,63 @@ title2 ’COMBINING 5 MIXED MODEL ANALYSES (COVARIANCE STRUCTURE)’;
 modeleffects YEARUN11 YEARUN21 YEARUN22 YEARUN31 YEARUN32 YEARUN33 PARENTCO;
 run;
 
+
+
+/*****************************************/
+/*MI-WGEE (for intermittent missingness)*/
+/******************************************/
+
+proc mi data=lda.acu2b seed=486048 simple out=lda.acu6 nimpute=10 round=0.1;
+title "Monotone multiple imputation";
+mcmc impute=monotone;
+var age chronicity severity0 severity3 severity12;
+by group;
+run;
+
+/*wide to long*/
+data lda.acu6b;
+set lda.acu6;
+array x (3) severity0 severity3 severity12;
+do j=1 to 3;
+severity=x(j);
+time=j;
+output;
+end;
+run;
+data lda.acu6b;
+set lda.acu6b;
+drop severity0 severity3 severity12 j;
+if time eq 1 then logtime=log(1+0);
+if time eq 2 then logtime=log(1+3);
+if time eq 3 then logtime=log(1+12);
+drop time;
+logtimeclass=logtime;
+if group eq 0 then group0=1;
+	else group0=0;
+if group eq 1 then group1=1;
+	else group1=0;
+run;
+
+proc sort data=lda.acu6b;
+by _imputation_;
+run;
+
+
+/*WGEE*/
+%dropout(data=lda.acu6b,id=id,time=logtime,response=severity,out=lda.acu6c);
+
+proc gee data=lda.acu6c;
+by _imputation_;
+class id group logtimeclass;
+model severity= age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime/ dist=normal;
+repeated subject=id /within=logtimeclass corr=un ecovb;
+missmodel prev age chronicity group /type=obslevel;
+ods output GEEEmpPEst=wgeeparms parminfo=wgeepinfo modelinfo=wgeemodelinfo GEERCov=wgeecovb;
+run;
+
+proc mianalyze parms=wgeeparms covb=wgeecovb parminfo=wgeepinfo wcov bcov tcov;
+modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime;
+run;
 
 
 
