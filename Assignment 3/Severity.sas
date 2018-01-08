@@ -64,7 +64,7 @@ run;
 /********************************************/
 
 /*1. MI: imputation task (MCMC method)*/
-proc mi data=lda.acu2b seed=486048 simple out=lda.acu3 nimpute=10 round=0.1;
+proc mi data=lda.acu2b seed=486048 simple out=lda.acu3 nimpute=20 round=0.1;
 var age chronicity severity0 severity3 severity12;
 by group;
 run;
@@ -127,57 +127,19 @@ repeated logtimeclass / type=un subject=ID r rcorr;
 ods output solutionf = lmsolution covb = lmcovb covparms = lmcovparms asycov = lmasycov;
 run;
 
-/*??*/
-data lmcovparms;
-set lmcovparms;
-if CovParm=’YEAR UN(1,1)’ then effect = ’YEARUN11’;
-if CovParm=’ UN(2,1)’ then effect = ’YEARUN21’;
-if CovParm=’ UN(2,2)’ then effect = ’YEARUN22’;
-if CovParm=’ UN(3,1)’ then effect = ’YEARUN31’;
-if CovParm=’ UN(3,2)’ then effect = ’YEARUN32’;
-if CovParm=’ UN(3,3)’ then effect = ’YEARUN33’;
-if CovParm=’PARENT Corr’ then effect = ’PARENTCORR’ ;
-drop covparm;
-data lmasycov;
-set lmasycov;
-Col1=CovP1;
-Col2=CovP2;
-Col3=CovP3;
-Col4=CovP4;
-Col5=CovP5;
-Col6=CovP6;
-Col7=CovP7;
-if CovParm=’YEAR UN(1,1)’ then effect = ’YEARUN11’;
-if CovParm=’ UN(2,1)’ then effect = ’YEARUN21’;
-if CovParm=’ UN(2,2)’ then effect = ’YEARUN22’;
-if CovParm=’ UN(3,1)’ then effect = ’YEARUN31’;
-if CovParm=’ UN(3,2)’ then effect = ’YEARUN32’;
-if CovParm=’ UN(3,3)’ then effect = ’YEARUN33’;
-if CovParm=’PARENT Corr’ then effect = ’PARENTCORR’ ;
-drop CovP1 CovP2 CovP3 CovP4 CovP5 CovP6 CovP7 covparm;
-run;
-
-
-
 /*3.2. MI: inference task: LMM*/
 /* Combining 10 Separate Analyses (mean structure) */
 proc mianalyze parms=lmsolution covb(effectvar=rowcol)=lmcovb;
 title2 ’COMBINING 5 MIXED MODEL ANALYSES (MEAN STRUCTURE)’;
 modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime;
 run;
-/* Combining 10 Separate Analyses (covariance structure) */
-proc mianalyze parms=covparms0 covb(effectvar=rowcol)=asycov0;
-title2 ’COMBINING 5 MIXED MODEL ANALYSES (COVARIANCE STRUCTURE)’;
-modeleffects YEARUN11 YEARUN21 YEARUN22 YEARUN31 YEARUN32 YEARUN33 PARENTCO;
-run;
-
 
 
 /*****************************************/
 /*MI-WGEE (for intermittent missingness)*/
 /******************************************/
 
-proc mi data=lda.acu2b seed=486048 simple out=lda.acu4 nimpute=10 round=0.1;
+proc mi data=lda.acu2b seed=486048 simple out=lda.acu4 nimpute=20 round=0.1;
 title "Monotone multiple imputation";
 mcmc impute=monotone;
 var age chronicity severity0 severity3 severity12;
@@ -208,7 +170,7 @@ if group eq 1 then group1=1;
 	else group1=0;
 run;
 
-proc sort data=lda.acu6b;
+proc sort data=lda.acu4b;
 by _imputation_;
 run;
 
