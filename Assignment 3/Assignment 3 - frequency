@@ -1,0 +1,118 @@
+libname LDA '/folders/myfolders';
+
+data lda.acu2;
+set lda.aculda2;
+logtime=log(time+1);
+logtimeclass=logtime;
+if frequency=0 then frequency=".";
+run;
+
+
+/********************************************/
+/* Exploration of missing data mechanisms.*/
+/********************************************/
+
+/* Long to wide format*/
+proc sort data=lda.acu2;
+by id age chronicity group;
+run;
+
+/* Transpose frequency */
+proc transpose data=lda.acu2 out=horiz_frequency prefix=frequency;
+by id  age chronicity group ;
+id time;
+var frequency;
+run;
+
+/* Transpose severity */
+proc transpose data=lda.acu2 out=horiz_severity prefix=severity;
+by id ;
+id time;
+var severity;
+run;
+
+/* Merging */
+proc sort data=horiz_frequency;
+by id;
+run;
+proc sort data=horiz_frequency;
+by id;
+run;
+
+data horiz;
+merge horiz_frequency horiz_severity;
+by id;
+drop _NAME_;
+run;
+
+/*Overview of missigness table*/
+proc mi data=horiz  simple nimpute=0;
+em ;
+var frequency3 frequency12 ;
+run;
+
+/* slightly different dropouts from severity's */
+proc mi data=horiz  simple nimpute=0;
+em ;
+var severity3 severity12 ;
+run;
+
+/*Overview of missigness table per group*/
+proc sort data=horiz;
+by group;
+run;
+
+proc mi data=horiz simple nimpute=0;
+em itprint outem=growthem1;
+var frequency3 frequency12;
+by group;
+run;
+
+
+
+
+/********************************************/
+/*Multiple imputation- LBM and GLMM */
+/********************************************/
+
+/*1. MI: imputation task (MCMC method)*/
+proc mi data=horiz simple out=mi_wide nimpute=20 round=0.1;
+var  age chronicity frequency0 frequency3 frequency12 severity0 severity3 severity12;
+by group;
+run;
+
+/*wide to long*/
+data mi_long;
+set mi_wide;
+array f (3) frequency0 frequency3 frequency12;
+array s (3) severity0 severity3 severity12;
+do j=1 to 3;
+frequency=f(j);
+severity=s(j);
+time=j;
+output;
+end;
+run;
+data mi_long;
+set mi_long;
+drop frequency0 frequency3 frequency12 severity0 severity3 severity12 j;
+timeclass=time;
+if group eq 0 then group0=1;
+	else group0=0;
+if group eq 1 then group1=1;
+	else group1=0;
+run;
+
+proc sort data=mi_long;
+by _imputation_;
+run;
+
+
+/* GLMM - mean structure has to be redefined */
+proc glimmix data=mi_long method=quad(qpoints=30);
+class id;
+by _imputation_;
+model frequency = severity chronicity age time  group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
