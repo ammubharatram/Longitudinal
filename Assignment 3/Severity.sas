@@ -48,14 +48,12 @@ proc mixed data=lda.acu2 method=ml nobound;
 class logtimeclass group id;
 model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
 random intercept logtime  /type=un subject=ID g gcorr v vcorr;
-repeated logtimeclass / type=un subject=ID r rcorr;
 run;
 /*method=reml*/
 proc mixed data=lda.acu2 method=reml nobound;
 class logtimeclass group id;
 model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
 random intercept logtime  /type=un subject=ID g gcorr v vcorr;
-repeated logtimeclass / type=un subject=ID r rcorr;
 run;
 
 
@@ -118,28 +116,29 @@ run;
 /********************************************/
 
 /*2.2. MI: analysis task: LMM*/
-proc mixed data=lda.acu3b method=ml asycov covtest nobound;
+proc mixed data=lda.acu3b method=reml asycov covtest nobound;
 class logtimeclass group id;
 by _imputation_;
 model severity= age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime/ s covb;
 random intercept logtime  /type=un subject=ID g gcorr v vcorr solution;
-repeated logtimeclass / type=un subject=ID r rcorr;
 ods output solutionf = lmsolution covb = lmcovb covparms = lmcovparms asycov = lmasycov;
 run;
 
+
 /*3.2. MI: inference task: LMM*/
-/* Combining 10 Separate Analyses (mean structure) */
+/* Combining 20 Separate Analyses (mean structure) */
 proc mianalyze parms=lmsolution covb(effectvar=rowcol)=lmcovb;
 title2 ’COMBINING 5 MIXED MODEL ANALYSES (MEAN STRUCTURE)’;
 modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime;
 run;
 
 
+
 /*****************************************/
 /*MI-WGEE (for intermittent missingness)*/
 /******************************************/
 
-proc mi data=lda.acu2b seed=486048 simple out=lda.acu4 nimpute=20 round=0.1;
+proc mi data=lda.acu2b seed=486048 simple out=lda.acu4 nimpute=10 round=0.1;
 title "Monotone multiple imputation";
 mcmc impute=monotone;
 var age chronicity severity0 severity3 severity12;
@@ -246,5 +245,72 @@ modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime 
 run;
 
 
+/*************************************/
+/*MODELING USING LMM*/
+/*************************************/
+
+/*full model*/
+proc mixed data=lda.acu2 method=ml nobound;
+class logtimeclass group id;
+model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
+random intercept logtime  /type=un subject=ID g gcorr v vcorr;
+run;
+/*8090.5, df=11*/
+
+/*model random effects covariance: only intercepts*/
+proc mixed data=lda.acu2 method=ml nobound;
+class logtimeclass group id;
+model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
+random intercept  /type=un subject=ID g gcorr v vcorr;
+run;
+/*8090.9,df=9*/
+/*1-pchisq(8090.9-8090.5, 11-9)=0.8187308 ok*/
 
 
+/*Variance plots*/
+proc mixed data=lda.acu2 method=reml;
+class id group logtimeclass;
+model severity= age chronicity group*logtime age*logtime chronicity*logtime/ solution;
+repeated logtimeclass / subject=id type=un r rcorr;
+run;
+
+/* Observed variance components of the response assuming full mean structure*/
+data test;
+input GROUP x y;
+cards;
+1 0 260.73 
+1 1.3862943611 281.16 
+1 2.5649493575 247.21
+run;
+
+/* creating the plot*/
+goptions reset=all;
+proc gplot data=test;
+plot y*x / haxis=axis1 vaxis=axis2;
+	symbol1 c=red value=dot i=join w=3 l=1 mode=include;
+	symbol2 c=black i=join w=10 l=1 mode=include;
+	axis1 label=(h=2 'log(TIME+1) ')order=(0 to 2.6 by 0.5) offset=(2)cm 
+		minor=none w=5;
+	axis2 label=(h=2 angle=90 'Var(Severity)') value=(h=2) w=5 order=(60 to 280);
+run;
+
+
+/*reduce mean structure: delete chronicity*logtime*/
+proc mixed data=lda.acu2 method=ml nobound;
+class logtimeclass group id;
+model severity= age chronicity group*logtime age*logtime/ solution;
+random intercept  /type=un subject=ID g gcorr v vcorr;
+run;
+/*8090.9,df=8*/
+/*1-pchisq(8090.9-8090.9, 9-8)=0.8187308 ok*/
+
+/*delete chronicity*/
+proc mixed data=lda.acu2 method=reml nobound;
+class logtimeclass group id;
+model severity= age group*logtime age*logtime/ solution;
+random intercept  /type=un subject=ID g gcorr v vcorr;
+contrast 'Equal slopes' group*logtime 1 -1;
+run;
+/*8090.9,df=8*/
+/*1-pchisq(8093.8-8090.9, 8-7)=0.08857955 ok*/
+/*1-pchisq(8093.8-8090.5, 11-7)=0.5089 ok */
