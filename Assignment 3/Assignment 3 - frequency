@@ -70,6 +70,72 @@ run;
 
 
 
+/********************************************/
+/* MODELLING WITHOUT MISSINGNESS */
+/********************************************/
+proc glimmix data=lda.acu2 method=laplace nobound ;
+class id;
+model frequency = severity age chronicity time chronicity*time severity*time age*time group*time
+/ dist=poisson solution;
+random intercept  / type=un solution subject=id ;
+run;
+/* -2ll= 5766.42 df=10 */
+
+
+/*including random slopes */
+proc glimmix data=lda.acu2 method=laplace  nobound;
+class id;
+model frequency = severity age chronicity time chronicity*time severity*time age*time group*time
+/ dist=poisson solution;
+random intercept time / type=un  subject=id ;
+run;
+/* -2ll= 5717.66 df=12 p<0.0001 random slopes ok*/
+
+
+
+/* SPLITTING ANALYSIS: WITH SEVERITY (ENVIRONMENT A) AND WITHOUT SEVERITY (ENVIRONMENT B) */
+
+/* ENVIRONMENT A: solution from assignment 2 */
+proc glimmix data=lda.acu2 method=quad(qpoints=30);
+class id;
+model frequency = age time age*time group*time
+/ dist=poisson solution;
+random intercept time  / type=un subject=id;
+run;
+/* -2LL=6402.18 df=8  */
+
+/* ENVIRONMENT B: reducing the mean structure */
+proc glimmix data=lda.acu2 method=laplace  nobound;
+class id;
+model frequency = severity age chronicity time chronicity*time severity*time age*time group*time
+/ dist=poisson solution;
+random intercept time / type=un  subject=id ;
+run;
+/* -2ll= 5717.66 df=12 */
+
+/* remove group*time */
+proc glimmix data=lda.acu2 method=laplace  nobound;
+class id;
+model frequency = severity age chronicity time chronicity*time severity*time age*time
+/ dist=poisson solution;
+random intercept time / type=un  subject=id ;
+run;
+/* -2ll= 5717.66 df=11 p=1 */
+
+/* remove age*time */
+proc glimmix data=lda.acu2 method=laplace nobound;
+class id;
+model frequency = severity age chronicity time chronicity*time severity*time 
+/ dist=poisson solution;
+random intercept time / type=un  subject=id ;
+run;
+/* -2ll=  df=10 p= */
+
+
+
+
+
+
 
 /********************************************/
 /*Multiple imputation- LBM and GLMM */
