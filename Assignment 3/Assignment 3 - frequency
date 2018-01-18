@@ -1,9 +1,8 @@
-libname LDA '/folders/myfolders';
+libname LDA 'H:\';
 
 data lda.acu2;
 set lda.aculda2;
-logtime=log(time+1);
-logtimeclass=logtime;
+timeclass=time;
 if frequency=0 then frequency=".";
 run;
 
@@ -43,6 +42,9 @@ data horiz;
 merge horiz_frequency horiz_severity;
 by id;
 drop _NAME_;
+logfr0=log(frequency0);
+logfr3=log(frequency3);
+logfr12=log(frequency12);
 run;
 
 /*Overview of missigness table*/
@@ -52,9 +54,8 @@ var frequency3 frequency12 ;
 run;
 
 /* slightly different dropouts from severity's */
-proc mi data=horiz  simple nimpute=0;
-em ;
-var severity3 severity12 ;
+proc mi data=horiz simple nimpute=0 ;
+var  age chronicity frequency0 frequency3 frequency12 severity0 severity3 severity12;
 run;
 
 /*Overview of missigness table per group*/
@@ -71,114 +72,190 @@ run;
 
 
 /********************************************/
-/* MODELLING WITHOUT MISSINGNESS */
+/* COMPLETE CASE ANALYSIS - GEE */
 /********************************************/
-proc glimmix data=lda.acu2 method=laplace nobound ;
-class id;
-model frequency = severity age chronicity time chronicity*time severity*time age*time group*time
-/ dist=poisson solution;
-random intercept  / type=un solution subject=id ;
-run;
-/* -2ll= 5766.42 df=10 */
 
-
-/*including random slopes */
-proc glimmix data=lda.acu2 method=laplace  nobound;
-class id;
-model frequency = severity age chronicity time chronicity*time severity*time age*time group*time
-/ dist=poisson solution;
-random intercept time / type=un  subject=id ;
-run;
-/* -2ll= 5717.66 df=12 p<0.0001 random slopes ok*/
-
-
-
-/* SPLITTING ANALYSIS: WITH SEVERITY (ENVIRONMENT A) AND WITHOUT SEVERITY (ENVIRONMENT B) */
-
-/* ENVIRONMENT A: solution from assignment 2 */
-proc glimmix data=lda.acu2 method=quad(qpoints=30);
-class id;
-model frequency = age time age*time group*time
-/ dist=poisson solution;
-random intercept time  / type=un subject=id;
-run;
-/* -2LL=6402.18 df=8  */
-
-/* ENVIRONMENT B: reducing the mean structure */
-proc glimmix data=lda.acu2 method=laplace  nobound;
-class id;
-model frequency = severity age chronicity time chronicity*time severity*time age*time group*time
-/ dist=poisson solution;
-random intercept time / type=un  subject=id ;
-run;
-/* -2ll= 5717.66 df=12 */
-
-/* remove group*time */
-proc glimmix data=lda.acu2 method=laplace  nobound;
-class id;
-model frequency = severity age chronicity time chronicity*time severity*time age*time
-/ dist=poisson solution;
-random intercept time / type=un  subject=id ;
-run;
-/* -2ll= 5717.66 df=11 p=1 */
-
-/* remove age*time */
-proc glimmix data=lda.acu2 method=laplace nobound;
-class id;
-model frequency = severity age chronicity time chronicity*time severity*time 
-/ dist=poisson solution;
-random intercept time / type=un  subject=id ;
-run;
-/* -2ll=  df=10 p= */
-
-
-
-
+proc genmod data=lda.acu2 ;
+class id timeclass;
+model frequency = severity age chronicity time severity*time age*time chronicity*time group*time / type3 dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind   modelse; run;
 
 
 
 /********************************************/
-/*Multiple imputation- LBM and GLMM */
+/*Multiple imputation */
 /********************************************/
 
-/*1. MI: imputation task (MCMC method)*/
-proc mi data=horiz simple out=mi_wide nimpute=20 round=0.1;
-var  age chronicity frequency0 frequency3 frequency12 severity0 severity3 severity12;
+proc mi data=horiz seed=486048 simple out=imp_wide nimpute=20 round=0.01;
+fcs reg(severity0=age chronicity); 
+fcs reg(severity3=age chronicity severity0); 
+fcs reg(severity12=age chronicity severity0 severity3); 
+fcs reg(logfr0= age chronicity severity0 severity3 severity12); 
+fcs reg(logfr3= age chronicity severity0 severity3 severity12 logfr0); 
+fcs reg(logfr12= age chronicity severity0 severity3 severity12 logfr0 logfr3); 
+var age chronicity severity0 severity3 severity12 logfr0 logfr3 logfr12 ;
+by group;
+run;
+
+
+
+/*wide to long*/
+data imp_long;
+set imp_wide;
+array f (3) logfr0 logfr3 logfr12;
+array s (3) severity0 severity3 severity12;
+do j=1 to 3;
+lfrequency=f(j);
+severity=s(j);
+time=j+20;
+output;
+end;
+run;
+
+
+data lda.acuimp;
+set imp_long;
+drop frequency0 frequency3 frequency12 severity0 severity3 severity12 logfr0 logfr3 logfr12 j;
+if time eq 21 then time=0;
+if time eq 22 then time=3;
+if time eq 23 then time=12;
+timeclass=time;
+frequency=exp(lfrequency);
+run;
+
+proc sort data=lda.acuimp;
+by _Imputation_;
+run;
+
+
+
+/********************************************/
+/* MAR - Multiple Imputation GEE */
+/********************************************/
+
+proc genmod data=lda.acuimp descending;
+class id timeclass;
+model frequency = severity age chronicity time severity*time age*time chronicity*time group*time / covb dist=poisson ;
+repeated subject=id / withinsubject=timeclass type=ind  covb modelse;
+by _imputation_;
+ods output GEEEmpPEst=geeparms parminfo=geepinfo CovB=geecovb;
+run;
+
+proc mianalyze parms=geeparms covb=geecovb parminfo=geepinfo wcov bcov tcov;
+modeleffects intercept severity age chronicity time severity*time age*time chronicity*time group*time;
+run;
+
+/********************************************/
+/* MAR - Multiple Imputation for non monotone missingness - WGEE */
+/********************************************/
+
+
+proc mi data=horiz seed=486048 simple out=imp_wide1 nimpute=20 round=0.01 minimum=0;
+mcmc impute=monotone ;
+var age chronicity severity0 severity3 severity12 logfr0 logfr3 logfr12;
 by group;
 run;
 
 /*wide to long*/
-data mi_long;
-set mi_wide;
-array f (3) frequency0 frequency3 frequency12;
+data imp_long1;
+set imp_wide1;
+array f (3) logfr0 logfr3 logfr12;
 array s (3) severity0 severity3 severity12;
 do j=1 to 3;
-frequency=f(j);
+lfrequency=f(j);
 severity=s(j);
-time=j;
+time=j+20;
 output;
 end;
 run;
-data mi_long;
-set mi_long;
-drop frequency0 frequency3 frequency12 severity0 severity3 severity12 j;
+
+
+data lda.acuimp1;
+set imp_long1;
+drop frequency0 frequency3 frequency12 severity0 severity3 severity12 logfr0 logfr3 logfr12 j;
+if time eq 21 then time=0;
+if time eq 22 then time=3;
+if time eq 23 then time=12;
 timeclass=time;
-if group eq 0 then group0=1;
-	else group0=0;
-if group eq 1 then group1=1;
-	else group1=0;
+frequency=exp(lfrequency);
 run;
 
-proc sort data=mi_long;
+proc sort data=lda.acuimp1;
+by _Imputation_;
+run;
+
+
+
+/*macro for creating variables "dropout" and "prev" */
+%macro dropout(data=,id=,time=,response=,out=);
+%if %bquote(&data)= %then %let data=&syslast;
+proc freq data=&data noprint;
+tables &id /out=freqid;
+tables &time / out=freqtime;
+run;
+proc iml;
+reset noprint;
+use freqid;
+read all var {&id};
+nsub = nrow(&id);
+use freqtime;
+read all var {&time};
+ntime = nrow(&time);
+time = &time;
+use &data;
+read all var {&id &time &response};
+n = nrow(&response);
+dropout = j(n,1,0);
+ind = 1;
+do while (ind <= nsub);
+j=1;
+if (&response[(ind-1)*ntime+j]=.) then print "First Measurement is Missing";
+if (&response[(ind-1)*ntime+j]^=.) then
+do;
+j = ntime;
+do until (j=1);
+if (&response[(ind-1)*ntime+j]=.) then
+do;
+dropout[(ind-1)*ntime+j]=1;
+j = j-1;
+end;
+else j = 1;
+end;
+end;
+ind = ind+1;
+end;
+prev = j(n,1,1);
+prev[2:n] = &response[1:n-1];
+i=1;
+do while (i<=n);
+if &time[i]=time[1] then prev[i]=.;
+i = i+1;
+end;
+create help var {&id &time &response dropout prev};
+append;
+quit;
+data &out;
+merge &data help;
+run;
+%mend;
+
+%dropout(data=lda.acuimp1,id=id,time=time,response=frequency,out=lda.acuimp2);
+
+proc gee data=lda.acuimp2;
 by _imputation_;
+class id  timeclass;
+model frequency = severity age chronicity time severity*time age*time chronicity*time group*time/ dist=poisson;
+repeated subject=id /within=timeclass corr=un ecovb;
+missmodel prev severity age chronicity group /type=obslevel;
+ods output GEEEmpPEst=wgeeparms parminfo=wgeepinfo modelinfo=wgeemodelinfo GEERCov=wgeecovb;
 run;
 
-
-/* GLMM - mean structure has to be redefined */
-proc glimmix data=mi_long method=quad(qpoints=30);
-class id;
-by _imputation_;
-model frequency = severity chronicity age time  group*time
-/ dist=poisson solution;
-random intercept time  / type=un subject=id;
+proc mianalyze parms=wgeeparms covb=wgeecovb parminfo=wgeepinfo wcov bcov tcov;
+modeleffects  intercept severity age chronicity time severity*time age*time chronicity*time group*time;
 run;
+
+proc genmod data=lda.acuimp2 ;
+class group;
+model dropout = prev group  age chronicity / pred dist=b;
+run;
+
