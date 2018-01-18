@@ -1,3 +1,19 @@
+/*Dropout analysis MCAR vs MAR psi1*/
+/********************************************/
+
+%dropout(data=lda3.acu2,id=id,time=logtime,response=severity,out=lda3.acupsi1);
+
+proc genmod data=lda3.acupsi1 descending;
+class group;
+model dropout = prev group / pred dist=b;
+run;
+
+proc genmod data=lda3.acupsi1 descending;
+class group;
+model dropout = prev group age chronicity group*logtime age*logtime chronicity*logtime/ pred dist=b;
+run;
+
+
 /********************************************/
 /*Sensitivity Analysis - General*/
 /********************************************/
