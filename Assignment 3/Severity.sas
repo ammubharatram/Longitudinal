@@ -62,7 +62,7 @@ run;
 /********************************************/
 
 /*1. MI: imputation task (MCMC method)*/
-proc mi data=lda.acu2b seed=486048 simple out=lda.acu3 nimpute=20 round=0.1;
+proc mi data=lda.acu2b seed=260811 simple out=lda.acu3 nimpute=30 round=0.1 minimum=0;
 var age chronicity severity0 severity3 severity12;
 by group;
 run;
@@ -126,7 +126,7 @@ run;
 
 
 /*3.2. MI: inference task: LMM*/
-/* Combining 20 Separate Analyses (mean structure) */
+/* Combining 30 Separate Analyses (mean structure) */
 proc mianalyze parms=lmsolution covb(effectvar=rowcol)=lmcovb;
 title2 ’COMBINING 5 MIXED MODEL ANALYSES (MEAN STRUCTURE)’;
 modeleffects intercept age chronicity group0*logtime group1*logtime age*logtime chronicity*logtime;
@@ -138,7 +138,7 @@ run;
 /*MI-WGEE (for intermittent missingness)*/
 /******************************************/
 
-proc mi data=lda.acu2b seed=486048 simple out=lda.acu4 nimpute=10 round=0.1;
+proc mi data=lda.acu2b seed=486048 simple out=lda.acu4 nimpute=10 round=0.1 minimum=0;
 title "Monotone multiple imputation";
 mcmc impute=monotone;
 var age chronicity severity0 severity3 severity12;
