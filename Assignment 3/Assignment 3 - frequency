@@ -150,19 +150,59 @@ run;
 /********************************************/
 
 
-proc mi data=horiz seed=486048 simple out=imp_wide1 nimpute=20 round=0.01 minimum=0;
-mcmc impute=monotone ;
-var age chronicity severity0 severity3 severity12 logfr0 logfr3 logfr12;
+/********************************************/
+/* MAR - Multiple Imputation for non monotone missingness - WGEE */
+/********************************************/
+
+data horiz;
+set horiz;
+dimmi=0;
+if logfr3 eq "." and logfr12 ne "." then dimmi=1;
+run;
+
+
+proc mi data=horiz seed=486048 simple out=imp_wide1 nimpute=20 round=0.01;
+fcs reg(severity0=age chronicity); 
+fcs reg(severity3=age chronicity severity0); 
+fcs reg(severity12=age chronicity severity0 severity3); 
+fcs reg(logfr0= age chronicity severity0 severity3 severity12); 
+fcs reg(logfr3= age chronicity severity0 severity3 severity12 logfr0); 
+var age chronicity severity0 severity3 severity12 logfr0 logfr3 logfr12 ;
 by group;
 run;
 
+data imp_step;
+set imp_wide1 ;
+where dimmi=1;
+dimmi=0;
+run;
+
+proc sort data= imp_step;
+by _imputation_;
+proc sort data= imp_wide1;
+by _imputation_;
+
+
+data imp_final;
+merge imp_step imp_wide1;
+by _imputation_;
+where dimmi=0;
+run;
+
+/* Checking monotone missingness */
+proc mi data=imp_final simple nimpute=0 ;
+var  age chronicity frequency0 frequency3 frequency12 severity0 severity3 severity12;
+run;
+
+
+
 /*wide to long*/
 data imp_long1;
-set imp_wide1;
-array f (3) logfr0 logfr3 logfr12;
+set imp_final;
+array f (3) frequency0 frequency3 frequency12;
 array s (3) severity0 severity3 severity12;
 do j=1 to 3;
-lfrequency=f(j);
+frequency=f(j);
 severity=s(j);
 time=j+20;
 output;
@@ -177,7 +217,6 @@ if time eq 21 then time=0;
 if time eq 22 then time=3;
 if time eq 23 then time=12;
 timeclass=time;
-frequency=exp(lfrequency);
 run;
 
 proc sort data=lda.acuimp1;
@@ -258,4 +297,3 @@ proc genmod data=lda.acuimp2 ;
 class group;
 model dropout = prev group  age chronicity / pred dist=b;
 run;
-
